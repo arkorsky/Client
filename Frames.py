@@ -53,8 +53,8 @@ class ReturnFrame(wx.Frame):  #零售退款Frame
 class KeyCodeConfigFrame(wx.Frame):  #打印按钮配置Frame
     
   def __init__(self):
-      wx.Frame.__init__(self, None, -1, u"零售退款",size=(800,600),style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE)
-      self.Bind(wx.EVT_CLOSE,self.ClosecashFrame)
+      wx.Frame.__init__(self, None, -1, u"快捷键配置",size=(800,600),style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE)
+      self.Bind(wx.EVT_CLOSE,self.CloseKeyCodeConfigFrame)
       self.Centre()
       Panels.KeyCodeConfigPage(self);
       

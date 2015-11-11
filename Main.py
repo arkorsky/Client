@@ -19,12 +19,11 @@ class MyApp(wx.App):
         self.conn = self.db.cursor()
         
         
-        
-#        self.LogIn=False;
-#        self.doLogIn();
-#        if(not self.LogIn):
-#            #如果未登录  关闭数据库链接,退出App
-#            return False;        
+        self.LogIn=False;
+        self.doLogIn();
+        if(not self.LogIn):
+            #如果未登录  关闭数据库链接,退出App
+            return False;        
             
         #初始化Frame
         self.Homeframe = Frames.HomeFrame()
@@ -40,9 +39,9 @@ class MyApp(wx.App):
     
     
     def release(self): #app关闭 释放资源
-         self.Cashframe.Destroy();
-         self.Homeframe.Destroy();
-         
+         self.Cashframe.Destroy()
+         self.Homeframe.Destroy()
+         self.KeyCodeConfigFrame.Destroy()
     
     
     def showDialogWithErrorMsg(self,ErrorMsg):

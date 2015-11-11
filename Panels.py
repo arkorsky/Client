@@ -2,6 +2,7 @@
 import wx
 import wx.xrc
 import wx.grid
+import datas
 
 
 class HomePage ( wx.Panel ):
@@ -95,6 +96,8 @@ class HomePage ( wx.Panel ):
              self.OnExit(None)
          if(event.GetKeyCode()==341):
              self.OnReturn(None)
+         if(event.GetKeyCode()==347):
+             self.OnKeyCodeConfig(None)
              
          event.Skip()     
              
@@ -507,6 +510,262 @@ class ReturnPage ( wx.Panel ):
         app=wx.GetApp()
         app.Cashframe.Show()
         
+
+class KeyCodeConfigPage ( wx.Panel ):
+    
+    
+    def getKeyCodeValue(self,keyPageDescription,operatename): #根据所在的页面和操作的名称 获取快捷键的值,比如F1,F2
+        for i in range(0,len(self.dbKeyCode)):
+            if(self.dbKeyCode[i][0]==operatename and self.dbKeyCode[i][4]==keyPageDescription):
+                return self.dbKeyCode[i][3]
+            
+    
+    
+    def __init__( self, parent ):
+        wx.Panel.__init__ ( self, parent, id = wx.ID_ANY, pos = wx.DefaultPosition, size = wx.Size( 800,600 ), style = wx.TAB_TRAVERSAL )
+        #初始化的时候查询出所有的快捷键配置项
+        app=wx.GetApp()
+        app.conn.execute("select operatename,keyCode,description ,KeyValue ,keyPageDescription from  config_keycode")
+        self.dbKeyCode =app.conn.fetchall()
         
-class KeyCodeConfigPage(self):     
-    pass
+        
+        MainSizer = wx.BoxSizer( wx.VERTICAL )
+        
+        #第一行
+        FirstSizer = wx.BoxSizer( wx.HORIZONTAL )
+        self.m_button3 = wx.Button( self, wx.ID_ANY, u"保存[S]", wx.DefaultPosition, wx.DefaultSize, 0 )
+        FirstSizer.Add( self.m_button3, 0, wx.ALL, 5 )
+        self.m_staticText7 = wx.StaticText( self, wx.ID_ANY, u"界面", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText7.Wrap( -1 )
+        self.m_staticText7.SetFont( wx.Font( 24, 70, 90, 90, False, "宋体" ) )
+        FirstSizer.Add( self.m_staticText7, 0, wx.ALIGN_CENTER|wx.LEFT, 10 )
+        self.m_staticText8 = wx.StaticText( self, wx.ID_ANY, u"按钮", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText8.Wrap( -1 )
+        self.m_staticText8.SetFont( wx.Font( 24, 70, 90, 90, False, "宋体" ) )
+        FirstSizer.Add( self.m_staticText8, 0, wx.ALIGN_CENTER|wx.LEFT, 180 )
+        self.m_staticText9 = wx.StaticText( self, wx.ID_ANY, u"操作键", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText9.Wrap( -1 )
+        self.m_staticText9.SetFont( wx.Font( 24, 70, 90, 90, False, "宋体" ) )
+        FirstSizer.Add( self.m_staticText9, 0, wx.ALIGN_CENTER|wx.LEFT, 130 )
+        MainSizer.Add( FirstSizer, 1, wx.EXPAND, 5 )
+        self.m_staticline3 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+        MainSizer.Add( self.m_staticline3, 0, wx.EXPAND |wx.ALL, 5 )
+        
+        
+        #第二行---左边两部分
+        SecondSizer = wx.BoxSizer( wx.HORIZONTAL )
+        bSizer8 = wx.BoxSizer( wx.VERTICAL )
+        self.m_staticText10 = wx.StaticText( self, wx.ID_ANY, u"收银界面", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText10.Wrap( -1 )
+        self.m_staticText10.SetFont( wx.Font( 26, 70, 90, 90, False, "宋体" ) )
+        bSizer8.Add( self.m_staticText10, 1, wx.ALIGN_CENTER, 60 )
+        SecondSizer.Add( bSizer8, 1, 0, 0 )
+        bSizer10 = wx.BoxSizer( wx.VERTICAL )
+        self.m_staticText11 = wx.StaticText( self, wx.ID_ANY, u"结算", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText11.Wrap( -1 )
+        self.m_staticText11.SetFont( wx.Font( 16, 70, 90, 90, False, "宋体" ) )
+        bSizer10.Add( self.m_staticText11, 0, wx.ALIGN_CENTER|wx.ALIGN_LEFT|wx.LEFT, 0 )
+        self.m_staticText12 = wx.StaticText( self, wx.ID_ANY, u"退货", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText12.Wrap( -1 )
+        self.m_staticText12.SetFont( wx.Font( 16, 70, 90, 90, False, "宋体" ) )
+        bSizer10.Add( self.m_staticText12, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+        self.m_staticText13 = wx.StaticText( self, wx.ID_ANY, u"删除", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText13.Wrap( -1 )
+        self.m_staticText13.SetFont( wx.Font( 16, 70, 90, 90, False, "宋体" ) )
+        bSizer10.Add( self.m_staticText13, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+        self.m_staticText14 = wx.StaticText( self, wx.ID_ANY, u"输入查询", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText14.Wrap( -1 )
+        self.m_staticText14.SetFont( wx.Font( 15, 70, 90, 90, False, "宋体" ) )
+        bSizer10.Add( self.m_staticText14, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+        self.m_staticText15 = wx.StaticText( self, wx.ID_ANY, u"退款方式", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText15.Wrap( -1 )
+        self.m_staticText15.SetFont( wx.Font( 16, 70, 90, 90, False, "宋体" ) )
+        bSizer10.Add( self.m_staticText15, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+        SecondSizer.Add( bSizer10, 1, wx.EXPAND, 5 )
+        #第二行---右边快捷键部分
+        FirstConfigSizer = wx.BoxSizer( wx.VERTICAL )
+        self.m_textCtrl14 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl14.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl14 : self.TextCtrlKeyDown(evt,self.m_textCtrl14))
+        self.m_textCtrl14.SetValue(self.getKeyCodeValue(u"收银界面", u"结算"))
+        self.m_textCtrl14.SetFocus()
+        FirstConfigSizer.Add( self.m_textCtrl14, 0, wx.LEFT, 7 )
+        self.m_textCtrl21 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl21.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl21 : self.TextCtrlKeyDown(evt,self.m_textCtrl21))
+        self.m_textCtrl21.SetValue(self.getKeyCodeValue(u"收银界面", u"退货"))
+        FirstConfigSizer.Add( self.m_textCtrl21, 0, wx.LEFT|wx.TOP, 7 )
+        self.m_textCtrl22 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl22.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl22 : self.TextCtrlKeyDown(evt,self.m_textCtrl22))
+        self.m_textCtrl22.SetValue(self.getKeyCodeValue(u"收银界面", u"删除"))
+        FirstConfigSizer.Add( self.m_textCtrl22, 0, wx.LEFT|wx.TOP, 7 )
+        self.m_textCtrl23 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl23.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl23 : self.TextCtrlKeyDown(evt,self.m_textCtrl23))
+        self.m_textCtrl23.SetValue(self.getKeyCodeValue(u"收银界面", u"输入查询"))
+        FirstConfigSizer.Add( self.m_textCtrl23, 0, wx.LEFT|wx.TOP, 7 )
+        self.m_textCtrl24 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl24.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl24 : self.TextCtrlKeyDown(evt,self.m_textCtrl24))
+        self.m_textCtrl24.SetValue(self.getKeyCodeValue(u"收银界面", u"退款方式"))
+        FirstConfigSizer.Add( self.m_textCtrl24, 0, wx.LEFT|wx.TOP, 7 )
+        SecondSizer.Add( FirstConfigSizer, 1, wx.EXPAND, 5 )
+        MainSizer.Add( SecondSizer, 5, wx.EXPAND|wx.LEFT, 15 )
+        self.m_staticline6 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+        MainSizer.Add( self.m_staticline6, 0, wx.EXPAND |wx.ALL, 5 )
+        
+        
+        #第三行---左边两部分
+        ThirdSizer = wx.BoxSizer( wx.HORIZONTAL )
+        bSizer18 = wx.BoxSizer( wx.VERTICAL )
+        self.m_staticText16 = wx.StaticText( self, wx.ID_ANY, u"收款明细", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText16.Wrap( -1 )
+        self.m_staticText16.SetFont( wx.Font( 26, 70, 90, 90, False, "宋体" ) )
+        bSizer18.Add( self.m_staticText16, 1, wx.ALIGN_CENTER|wx.LEFT, 25 )
+        ThirdSizer.Add( bSizer18, 1, wx.EXPAND, 5 )
+        bSizer21 = wx.BoxSizer( wx.VERTICAL )
+        self.m_staticText17 = wx.StaticText( self, wx.ID_ANY, u"支付方式", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText17.Wrap( -1 )
+        self.m_staticText17.SetFont( wx.Font( 15, 70, 90, 90, False, "宋体" ) )
+        bSizer21.Add( self.m_staticText17, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+        self.m_staticText18 = wx.StaticText( self, wx.ID_ANY, u"收款金额", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText18.Wrap( -1 )
+        self.m_staticText18.SetFont( wx.Font( 16, 70, 90, 90, False, "宋体" ) )
+        bSizer21.Add( self.m_staticText18, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+        self.m_staticText19 = wx.StaticText( self, wx.ID_ANY, u"手机", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText19.Wrap( -1 )
+        self.m_staticText19.SetFont( wx.Font( 15, 70, 90, 90, False, "宋体" ) )
+        bSizer21.Add( self.m_staticText19, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+        self.m_staticText20 = wx.StaticText( self, wx.ID_ANY, u"收款", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText20.Wrap( -1 )
+        self.m_staticText20.SetFont( wx.Font( 15, 70, 90, 90, False, "宋体" ) )
+        bSizer21.Add( self.m_staticText20, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+        ThirdSizer.Add( bSizer21, 1, wx.LEFT, 15 )
+        #第三行---右边快捷键部分
+        bSizer22 = wx.BoxSizer( wx.VERTICAL )
+        self.m_textCtrl20 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl20.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl20 : self.TextCtrlKeyDown(evt,self.m_textCtrl20))
+        self.m_textCtrl20.SetValue(self.getKeyCodeValue(u"收款明细", u"支付方式"))
+        bSizer22.Add( self.m_textCtrl20, 0, wx.LEFT, 7 )
+        self.m_textCtrl25 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl25.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl25 : self.TextCtrlKeyDown(evt,self.m_textCtrl25))
+        self.m_textCtrl25.SetValue(self.getKeyCodeValue(u"收款明细", u"收款金额"))
+        bSizer22.Add( self.m_textCtrl25, 0, wx.LEFT|wx.TOP, 7 )
+        self.m_textCtrl26 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl26.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl26 : self.TextCtrlKeyDown(evt,self.m_textCtrl26))
+        self.m_textCtrl26.SetValue(self.getKeyCodeValue(u"收款明细", u"手机"))
+        bSizer22.Add( self.m_textCtrl26, 0, wx.LEFT|wx.TOP, 7 )
+        self.m_textCtrl27 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl27.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl27 : self.TextCtrlKeyDown(evt,self.m_textCtrl27))
+        self.m_textCtrl27.SetValue(self.getKeyCodeValue(u"收款明细", u"收款"))
+        bSizer22.Add( self.m_textCtrl27, 0, wx.LEFT|wx.TOP, 7 )
+        ThirdSizer.Add( bSizer22, 1, wx.EXPAND|wx.LEFT, 5 )
+        MainSizer.Add( ThirdSizer, 4, wx.EXPAND, 5 )
+        self.m_staticline7 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+        MainSizer.Add( self.m_staticline7, 0, wx.EXPAND |wx.ALL, 5 )
+        
+        
+        #第四行---左边部分
+        FourthSizer = wx.BoxSizer( wx.HORIZONTAL )
+        bSizer23 = wx.BoxSizer( wx.VERTICAL )
+        self.m_staticText21 = wx.StaticText( self, wx.ID_ANY, u"退货界面", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText21.Wrap( -1 )
+        self.m_staticText21.SetFont( wx.Font( 26, 70, 90, 90, False, "宋体" ) )
+        bSizer23.Add( self.m_staticText21, 0, wx.ALIGN_CENTER|wx.LEFT, 25 )
+        FourthSizer.Add( bSizer23, 1, wx.EXPAND, 5 )
+        bSizer26 = wx.BoxSizer( wx.VERTICAL )
+        self.m_staticText22 = wx.StaticText( self, wx.ID_ANY, u"结算", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText22.Wrap( -1 )
+        self.m_staticText22.SetFont( wx.Font( 16, 70, 90, 90, False, "宋体" ) )
+        bSizer26.Add( self.m_staticText22, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+        self.m_staticText23 = wx.StaticText( self, wx.ID_ANY, u"销售", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText23.Wrap( -1 )
+        self.m_staticText23.SetFont( wx.Font( 16, 70, 90, 90, False, "宋体" ) )
+        bSizer26.Add( self.m_staticText23, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+        self.m_staticText24 = wx.StaticText( self, wx.ID_ANY, u"删除", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText24.Wrap( -1 )
+        self.m_staticText24.SetFont( wx.Font( 16, 70, 90, 90, False, "宋体" ) )
+        bSizer26.Add( self.m_staticText24, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+        self.m_staticText25 = wx.StaticText( self, wx.ID_ANY, u"输入查询", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText25.Wrap( -1 )
+        self.m_staticText25.SetFont( wx.Font( 16, 70, 90, 90, False, "宋体" ) )
+        bSizer26.Add( self.m_staticText25, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+        self.m_staticText30 = wx.StaticText( self, wx.ID_ANY, u"商品数量", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText30.Wrap( -1 )
+        self.m_staticText30.SetFont( wx.Font( 16, 70, 90, 90, False, "宋体" ) )
+        bSizer26.Add( self.m_staticText30, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+        FourthSizer.Add( bSizer26, 1, wx.EXPAND|wx.LEFT, 15 )
+        #第四行---右边快捷键部分
+        bSizer27 = wx.BoxSizer( wx.VERTICAL )
+        self.m_textCtrl28 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl28.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl28 : self.TextCtrlKeyDown(evt,self.m_textCtrl28))
+        self.m_textCtrl28.SetValue(self.getKeyCodeValue(u"退货界面", u"结算"))
+        bSizer27.Add( self.m_textCtrl28, 0, wx.LEFT|wx.TOP, 7 )
+        self.m_textCtrl29 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl29.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl29 : self.TextCtrlKeyDown(evt,self.m_textCtrl29))
+        self.m_textCtrl29.SetValue(self.getKeyCodeValue(u"退货界面", u"销售"))
+        bSizer27.Add( self.m_textCtrl29, 0, wx.LEFT|wx.TOP, 7 )
+        self.m_textCtrl30 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl30.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl30 : self.TextCtrlKeyDown(evt,self.m_textCtrl30))
+        self.m_textCtrl30.SetValue(self.getKeyCodeValue(u"退货界面", u"删除"))
+        bSizer27.Add( self.m_textCtrl30, 0, wx.LEFT|wx.TOP, 7 )
+        self.m_textCtrl31 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl31.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl31 : self.TextCtrlKeyDown(evt,self.m_textCtrl31))
+        self.m_textCtrl31.SetValue(self.getKeyCodeValue(u"退货界面", u"输入查询"))
+        bSizer27.Add( self.m_textCtrl31, 0, wx.LEFT|wx.TOP, 7 )
+        self.m_textCtrl32 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl32.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl32 : self.TextCtrlKeyDown(evt,self.m_textCtrl32))
+        self.m_textCtrl32.SetValue(self.getKeyCodeValue(u"退货界面", u"商品数量"))
+        bSizer27.Add( self.m_textCtrl32, 0, wx.LEFT|wx.TOP, 7 )
+        FourthSizer.Add( bSizer27, 1, wx.EXPAND|wx.LEFT, 5 )
+        MainSizer.Add( FourthSizer, 5, wx.EXPAND, 5 )
+        self.m_staticline8 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
+        MainSizer.Add( self.m_staticline8, 0, wx.EXPAND |wx.ALL, 5 )
+        
+        #第五行---左边部分
+        FifthSizer = wx.BoxSizer( wx.HORIZONTAL )
+        bSizer28 = wx.BoxSizer( wx.VERTICAL )
+        self.m_staticText31 = wx.StaticText( self, wx.ID_ANY, u"退款", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText31.Wrap( -1 )
+        self.m_staticText31.SetFont( wx.Font( 26, 70, 90, 90, False, "宋体" ) )
+        bSizer28.Add( self.m_staticText31, 0, wx.ALIGN_CENTER_HORIZONTAL|wx.LEFT, 25 )
+        FifthSizer.Add( bSizer28, 1, wx.EXPAND, 5 )
+        bSizer31 = wx.BoxSizer( wx.VERTICAL )
+        self.m_staticText32 = wx.StaticText( self, wx.ID_ANY, u"退款方式", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText32.Wrap( -1 )
+        self.m_staticText32.SetFont( wx.Font( 16, 70, 90, 90, False, "宋体" ) )
+        bSizer31.Add( self.m_staticText32, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+        FifthSizer.Add( bSizer31, 1, wx.EXPAND|wx.LEFT, 15 )
+        #第无行---右边快捷键部分
+        bSizer32 = wx.BoxSizer( wx.VERTICAL )
+        self.m_textCtrl33 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl33.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl33 : self.TextCtrlKeyDown(evt,self.m_textCtrl33))
+        self.m_textCtrl33.SetValue(self.getKeyCodeValue(u"退款", u"退款方式"))
+        bSizer32.Add( self.m_textCtrl33, 0, wx.ALL, 5 )
+        FifthSizer.Add( bSizer32, 1, wx.EXPAND|wx.LEFT, 7 )
+        MainSizer.Add( FifthSizer, 1, wx.EXPAND, 5 )
+
+        
+        self.SetSizer( MainSizer )
+        self.Layout()
+    
+       
+        
+            
+    def TextCtrlKeyDown(self,event,target):
+            keyCode=event.GetKeyCode()
+            
+            if(keyCode==83):#保存按钮
+                pass
+            if(keyCode>=340 and keyCode <=351):
+                str=datas.KeyCodes[keyCode]
+                target.SetValue(str)
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
+                
