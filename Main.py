@@ -1,5 +1,6 @@
 #coding:utf-8
-import wx,os,Frames,Dialogs,md5,sys,sqlite3,datas
+import wx,os,Frames,Dialogs,md5,sys,sqlite3,datas,time,Utils
+from decimal import *
 
 
 def opj(path):
@@ -10,7 +11,6 @@ def opj(path):
         str = '/' + str
     return str
 
-
         
 class MyApp(wx.App):
     def OnInit(self):
@@ -19,29 +19,29 @@ class MyApp(wx.App):
         self.conn = self.db.cursor()
         
         
+        
+#        for  i in range(0,1000):
+#             sql="insert into sale_order(id,date,salerid,salername,purchtype,customerid,customername,amout)values (? , ? , ? , ? , ? , ? , ? ,?)"
+#             param=('20151117090416000000879475', '2015-11-17', u'123', u'\u5c0f\u674e', u'1', u'', u'', u'196.0')
+#             Utils.commit(sql,param)
+#        self.conn.close()    
         self.LogIn=False;
         self.doLogIn();
         if(not self.LogIn):
             #如果未登录  关闭数据库链接,退出App
             return False;        
-            
         #初始化Frame
-        self.Homeframe = Frames.HomeFrame()
-        
-        self.Cashframe = Frames.cashFrame() 
-        self.ReturnFrame=Frames.ReturnFrame()
-        self.KeyCodeConfigFrame=Frames.KeyCodeConfigFrame();
-        
-        
-        self.Homeframe.Show()
-        
+        self.Homeframe=Frames.HomeFrame()
+#        Frames.GoodsQueryFrame()
+#        cashFrame=Frames.cashFrame()
+#        returnFrame=Frames.ReturnFrame()
+#        getMoneyFrame.Show()
         return True
     
     
     def release(self): #app关闭 释放资源
-         self.Cashframe.Destroy()
          self.Homeframe.Destroy()
-         self.KeyCodeConfigFrame.Destroy()
+#        pass
     
     
     def showDialogWithErrorMsg(self,ErrorMsg):
@@ -59,7 +59,7 @@ class MyApp(wx.App):
                  if(username==u'' or password==''):
                      self.showDialogWithErrorMsg(u"用户名或密码不能为空")
                  else :
-                     self.conn.execute("select name,password from sys_user where username= ? ",(username,))
+                     self.conn.execute("select id,name,password from sys_user where username= ? ",(username,))
                      res =self.conn.fetchall()
                         
                      if(not len(res)>0):
@@ -67,8 +67,10 @@ class MyApp(wx.App):
                      else:
                          m1=md5.new()
                          md5psw=m1.update(password)      
-                         if(res[0][1]==m1.hexdigest()):
+                         if(res[0][2]==m1.hexdigest()):
                              self.LogIn=True
+                             self.Id=res[0][0] # Id,
+                             self.Name=res[0][1] # Name,
                          else:
                              self.showDialogWithErrorMsg(u"账号或密码错误")
              if val == wx.ID_CANCEL:
