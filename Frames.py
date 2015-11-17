@@ -3,14 +3,15 @@ import  wx
 import Panels,Dialogs
 import md5
 import Frames
-
+import Utils
 
 class HomeFrame(wx.Frame): #进入首页的Frame
     def __init__(self):
          wx.Frame.__init__(self, None, -1, u"门店管理系统",size=(500,400),style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE)
          self.Bind(wx.EVT_CLOSE,self.CloseHomeFrame)
          self.Centre()
-         Data=(u"收银员编号   :    20102",u"收银员名称   :     看看看",u"      收银日期  :     2015-10-10")
+         app=wx.GetApp()
+         Data=(u"收银员编号   :    "+str(app.Id),u"收银员名称   :     "+app.Name,u"      收银日期  :     "+Utils.getDateStr())
          Panels.HomePage(self,Data);
          self.Show()
              

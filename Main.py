@@ -18,8 +18,6 @@ class MyApp(wx.App):
         self.db = sqlite3.connect(opj("data/test.db")) 
         self.conn = self.db.cursor()
         
-        
-        
 #        for  i in range(0,1000):
 #             sql="insert into sale_order(id,date,salerid,salername,purchtype,customerid,customername,amout)values (? , ? , ? , ? , ? , ? , ? ,?)"
 #             param=('20151117090416000000879475', '2015-11-17', u'123', u'\u5c0f\u674e', u'1', u'', u'', u'196.0')
@@ -32,10 +30,6 @@ class MyApp(wx.App):
             return False;        
         #初始化Frame
         self.Homeframe=Frames.HomeFrame()
-#        Frames.GoodsQueryFrame()
-#        cashFrame=Frames.cashFrame()
-#        returnFrame=Frames.ReturnFrame()
-#        getMoneyFrame.Show()
         return True
     
     
@@ -61,7 +55,6 @@ class MyApp(wx.App):
                  else :
                      self.conn.execute("select id,name,password from sys_user where username= ? ",(username,))
                      res =self.conn.fetchall()
-                        
                      if(not len(res)>0):
                           self.showDialogWithErrorMsg(u"用户名不存在")
                      else:
