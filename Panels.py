@@ -2182,7 +2182,7 @@ class ReturnOrderPage ( wx.Panel ):
          if(keyCode==13 or keyCode==370):
              self.QueryGoods()
          if(keyCode==27):
-           self.GetParent().ClosesaleOrderQueryFrame(None)
+           self.GetParent().ClosereturnOrderQueryFrame(None)
          event.Skip()
          
        
