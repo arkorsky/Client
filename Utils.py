@@ -16,11 +16,11 @@ def transFerGirdData(Grid): #将Grid信息转换为List<Map<String,String>
 
 def getSaleOrderId(): #生成销售单号
     ISOTIMEFORMAT='%Y%m%d%H%M%S'
-    return time.strftime( ISOTIMEFORMAT, time.localtime())+"000000"+str(random.randint(100000, 999999))
+    return time.strftime( ISOTIMEFORMAT, time.localtime())+str(random.randint(10, 99))
 
 def getReturnOrderId(): #生成退货单号
     ISOTIMEFORMAT='%Y%m%d%H%M%S'
-    return time.strftime( ISOTIMEFORMAT, time.localtime())+"000000"+str(random.randint(100000, 999999))
+    return time.strftime( ISOTIMEFORMAT, time.localtime())+str(random.randint(10, 99))
 
 
 def getDateStr(): #获取时间str
@@ -29,7 +29,10 @@ def getDateStr(): #获取时间str
 
 def query(sql,paramTuple): #查询sql
     app=wx.GetApp()
-    app.conn.execute(sql,paramTuple)
+    if(paramTuple!=None):
+        app.conn.execute(sql,paramTuple)
+    else:
+        app.conn.execute(sql)   
     if(PrintSQL):
         print(sql)
         print("query  params:"+str(paramTuple))

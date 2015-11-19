@@ -57,7 +57,7 @@ class getMoneyFrame(wx.Frame): #收款明细,最后结算页面
       
 class ReturnFrame(wx.Frame):  #零售退款页面
     
-  def __init__(self,saleOrder,saleOrderDetail):
+  def __init__(self,saleOrder,saleOrderDetail): #销售单,销售单详细信息
       wx.Frame.__init__(self, None, -1, u"零售退款",size=(800,600),style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE)
       self.Bind(wx.EVT_CLOSE,self.ClosecashFrame)
       self.Centre()
@@ -75,17 +75,16 @@ class ReturnFrame(wx.Frame):  #零售退款页面
   
 
 class returnMoneyFrame(wx.Frame):
-    def __init__(self,cashMoney,GoodsData,saleOrderId):
+    def __init__(self,cashMoney,GoodsData,saleOrderId,saleOrder,saleOrderDetail): #退货金额 退货商品信息,销售单号,销售单,销售单详细信息
       print(saleOrderId)
       wx.Frame.__init__(self, None, -1, u"退款明细",size=(800,600),style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE)
       self.Bind(wx.EVT_CLOSE,self.ClosereturnMoneyFrame)
       self.Centre()
-      Panels.returnMoneyPage(self,cashMoney,GoodsData,saleOrderId)
+      Panels.returnMoneyPage(self,cashMoney,GoodsData,saleOrderId,saleOrder,saleOrderDetail)
       self.Show()
       
-    def ClosereturnMoneyFrame(self,event):#零售收款页面关闭,打开收银页面
+    def ClosereturnMoneyFrame(self,event):#打开退货页面
       self.Destroy()
-      Frames.ReturnFrame()
 
       
 class KeyCodeConfigFrame(wx.Frame):  #打印按钮配置Frame
@@ -142,6 +141,17 @@ class returnOrderQueryFrame(wx.Frame):     #销售单查询Frame
           app = wx.GetApp()
           app.Homeframe.Show()                 
 
-
+class printConfigFrame(wx.Frame):     #打印配置界面
+     def __init__(self):
+          wx.Frame.__init__(self, None, -1, u"打印配置",size=(600,600),style=wx.DEFAULT_FRAME_STYLE | wx.NO_FULL_REPAINT_ON_RESIZE)
+          self.Bind(wx.EVT_CLOSE,self.closeprintConfigFrame)
+          self.Centre()
+          Panels.printConfigPage(self)
+          self.Show()
+      
+     def closeprintConfigFrame(self,event):#打印配置关闭,回到主页面
+          self.Destroy()
+          app = wx.GetApp()
+          app.Homeframe.Show()    
           
       

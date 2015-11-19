@@ -6,6 +6,7 @@ import wx.grid
 import datas
 from decimal import *
 import Utils
+import Print
 
 class HomePage ( wx.Panel ):
     
@@ -90,7 +91,7 @@ class HomePage ( wx.Panel ):
         self.returnBtn.Bind(wx.EVT_LEFT_DOWN,self.OnReturn)
 #        self.pswChangeBtn.Bind(wx.EVT_LEFT_DOWN, self.OnKeyDown)
         self.querysalesBtn.Bind(wx.EVT_LEFT_DOWN, self.SaleOrderQuery)
-#        self.printSettingsBtn.Bind(wx.EVT_LEFT_DOWN, self.OnKeyDown)
+        self.printSettingsBtn.Bind(wx.EVT_LEFT_DOWN, self.OnprintConfig)
         self.returnQueryBtn.Bind(wx.EVT_LEFT_DOWN, self.ReturnOrderQuery)
         self.keyCodeConfig.Bind(wx.EVT_LEFT_DOWN,self.OnKeyCodeConfig)
 #        self.dailyReportBtn.Bind(wx.EVT_LEFT_DOWN, self.OnKeyDown)
@@ -110,7 +111,7 @@ class HomePage ( wx.Panel ):
          if(event.GetKeyCode()==344):#F5 销售单查询
              self.SaleOrderQuery(None)
          if(event.GetKeyCode()==345):#F6 打印配置
-             pass
+             self.OnprintConfig(None)
          if(event.GetKeyCode()==346):#F7 退货单查询
              self.ReturnOrderQuery(None)
          if(keyCode==347): #F8 快捷键配置
@@ -165,7 +166,11 @@ class HomePage ( wx.Panel ):
         else:
             dialog.Destroy()
             return 
-        
+    def OnprintConfig(self,event):  #打印配置事件
+        Frames.printConfigFrame()
+        app=wx.GetApp()
+        app.Homeframe.Hide()
+           
     def OnKeyCodeConfig(self,event): #快捷键配置
         app = wx.GetApp()
         app.Homeframe.Hide()    
@@ -185,11 +190,13 @@ class CashPage ( wx.Panel ):
         self.KeyCodesConfigs = Utils.query(sql,(u"收银界面",))
         
         PanelSizer = wx.BoxSizer( wx.VERTICAL )
+        
+        
+        
         #上面的按钮
         ButtonSizer = wx.BoxSizer( wx.HORIZONTAL )
         str=self.getKeyCodeAndValueByName(u"结算")
         self.balanceBtn = wx.Button( self, wx.ID_ANY,u"结算["+str[1]+"]", wx.DefaultPosition, wx.DefaultSize, wx.TE_PROCESS_ENTER )
-        
         ButtonSizer.Add( self.balanceBtn, 0, wx.ALL, 5 )
         str=self.getKeyCodeAndValueByName(u"退货")
         self.returnBtn = wx.Button( self, wx.ID_ANY, u"退货["+str[1]+"]", wx.DefaultPosition, wx.DefaultSize, wx.TE_PROCESS_ENTER )
@@ -198,6 +205,13 @@ class CashPage ( wx.Panel ):
         self.delBtn = wx.Button( self, wx.ID_ANY, u"删除["+str[1]+"]", wx.DefaultPosition, wx.DefaultSize, wx.TE_PROCESS_ENTER )
         ButtonSizer.Add( self.delBtn, 0, wx.ALL, 5 )
         PanelSizer.Add( ButtonSizer, 1, wx.ALIGN_CENTER|wx.ALIGN_CENTER_HORIZONTAL|wx.EXPAND|wx.LEFT, 10 )
+        
+        ifshowBtn=Utils.query(sql,(u"按钮显示",))[0][2]
+        if(ifshowBtn[0:2]=="隐藏"):
+            self.balanceBtn.Hide()
+            self.returnBtn.Hide()
+            self.delBtn.Hide()
+            
         self.staticLine = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
         PanelSizer.Add( self.staticLine, 0, wx.EXPAND |wx.ALL, 5 )
         
@@ -759,8 +773,35 @@ class getMoneyPage ( wx.Panel):
             sql="insert into sale_order(id,date,salerid,salername,purchtype,customerid,customername,amout)values (? , ? , ? , ? , ? , ? , ? ,?)"
             payWayValue=self.getPayWayval(self.m_textCtrl8.GetValue())
             Utils.commit(sql,(saleId,Utils.getDateStr(),app.Id,app.Name,payWayValue,u"",u"",self.cashMoney,))
+            
+            
+            #打印小票
+            self.pdata = wx.PrintData()
+            self.pdata.SetPaperId(wx.PAPER_LETTER)
+            self.pdata.SetOrientation(wx.PORTRAIT)
+            data = wx.PrintDialogData(self.pdata)
+            
+            printer = wx.Printer(data)
+            
+            self.margins = (wx.Point(15,15), wx.Point(15,15))
+            sql="select head1,head2,foot1,foot2 from config_print where id = 1"
+            ConfigData=Utils.query(sql,None)
+            
+            OtherData=list()
+            OtherData.append(saleId)
+            OtherData.append(self.cashMoney)
+            
+            printout1 = Print.GoodsPrinter(ConfigData, self.GoodsData , "title" , OtherData)
+            
+            printer.Print(None,printout1,True)
+            
             return
         except InvalidOperation:
+            data=self.m_textCtrl7.GetValue();
+            if(data=="输入有误"):
+                wx.MessageBox(u"                输入有误", u"错误")
+            if(data=="收款不足"):
+                wx.MessageBox(u"                收款不足", u"错误")
             wx.MessageBox(u"                输入有误", u"错误")
             return
             
@@ -846,6 +887,15 @@ class ReturnPage ( wx.Panel ):
         self.delBtn = wx.Button( self, wx.ID_ANY, u"删除["+str[1]+"]", wx.DefaultPosition, wx.DefaultSize, wx.TE_PROCESS_ENTER )
         ButtonSizer.Add( self.delBtn, 0, wx.ALL, 5 )
         PanelSizer.Add( ButtonSizer, 1, wx.ALIGN_CENTER|wx.ALIGN_CENTER_HORIZONTAL|wx.EXPAND|wx.LEFT, 10 )
+        
+        ifshowBtn=Utils.query(sql,(u"按钮显示",))[0][2]
+        if(ifshowBtn[0:2]=="隐藏"):
+            self.balanceBtn.Hide()
+            self.returnBtn.Hide()
+            self.delBtn.Hide()
+        
+        
+        
         self.staticLine = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
         PanelSizer.Add( self.staticLine, 0, wx.EXPAND |wx.ALL, 5 )
         
@@ -1243,15 +1293,17 @@ class ReturnPage ( wx.Panel ):
         cashmoney=self.m_textCtrl5.GetValue()
         self.GetParent().Destroy()
         GoodsData=Utils.transFerGirdData(self.goodsGrid)
-        Frames.returnMoneyFrame(cashmoney,GoodsData,self.saleOrder[0][0])
+        Frames.returnMoneyFrame(cashmoney,GoodsData,self.saleOrder[0][0],self.saleOrder,self.saleOrderDetail)
         
         
         
 class returnMoneyPage ( wx.Panel):
     
-    def __init__( self, parent ,cashMoney,GoodsData,saleOrderId):
+    def __init__( self, parent ,cashMoney,GoodsData,saleOrderId,saleOrder,saleOrderDetail):
         self.GoodsData=GoodsData
         self.saleOrderId=saleOrderId
+        self.saleOrder=saleOrder
+        self.saleOrderDetail=saleOrderDetail
         
         sql="select value from syscode where name = ? "
         self.AllowNum=Decimal(Utils.query(sql,(u"退款允许差额",))[0][0])
@@ -1458,6 +1510,8 @@ class returnMoneyPage ( wx.Panel):
             
         if(KeyCode==27): #ESC
             self.GetParent().ClosereturnMoneyFrame(None)
+            #ESC返回上以页面,保留用户之前输入的销售单号
+            Frames.ReturnFrame(self.saleOrder,self.saleOrderDetail)
             return
         
         
@@ -1484,10 +1538,7 @@ class KeyCodeConfigPage ( wx.Panel ):
     def __init__( self, parent ):
         wx.Panel.__init__ ( self, parent, id = wx.ID_ANY, pos = wx.DefaultPosition, size = wx.Size( 800,600 ), style = wx.TAB_TRAVERSAL )
         #初始化的时候查询出所有的快捷键配置项
-        app=wx.GetApp()
-        app.conn.execute("select operatename,keyCode,description ,KeyValue ,keyPageDescription from  config_keycode")
-        self.dbKeyCode =app.conn.fetchall()
-        
+        self.dbKeyCode=Utils.query("select operatename,keyCode,description ,KeyValue ,keyPageDescription from  config_keycode",None)
         
         MainSizer = wx.BoxSizer( wx.VERTICAL )
         
@@ -1509,6 +1560,13 @@ class KeyCodeConfigPage ( wx.Panel ):
         self.m_staticText9.Wrap( -1 )
         self.m_staticText9.SetFont( wx.Font( 24, 70, 90, 90, False, "宋体" ) )
         FirstSizer.Add( self.m_staticText9, 0, wx.ALIGN_CENTER|wx.LEFT, 130 )
+        
+        
+        self.buttonShow = wx.TextCtrl( self, wx.ID_ANY, u"显示按钮[K]", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.buttonShow.SetValue(self.getKeyCodeValue(u"按钮显示", u"按钮显示"))
+        self.buttonShow.SetEditable( False )
+        FirstSizer.Add( self.buttonShow, 0, wx.ALIGN_CENTER|wx.LEFT, 20 )
+        
         MainSizer.Add( FirstSizer, 1, wx.EXPAND, 5 )
         self.m_staticline3 = wx.StaticLine( self, wx.ID_ANY, wx.DefaultPosition, wx.DefaultSize, wx.LI_HORIZONTAL )
         MainSizer.Add( self.m_staticline3, 0, wx.EXPAND |wx.ALL, 5 )
@@ -1520,7 +1578,10 @@ class KeyCodeConfigPage ( wx.Panel ):
         self.m_staticText10 = wx.StaticText( self, wx.ID_ANY, u"收银界面", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.m_staticText10.Wrap( -1 )
         self.m_staticText10.SetFont( wx.Font( 26, 70, 90, 90, False, "宋体" ) )
+        
+        
         bSizer8.Add( self.m_staticText10, 1, wx.ALIGN_CENTER, 60 )
+        
         SecondSizer.Add( bSizer8, 1, 0, 0 )
         bSizer10 = wx.BoxSizer( wx.VERTICAL )
         self.m_staticText11 = wx.StaticText( self, wx.ID_ANY, u"结算", wx.DefaultPosition, wx.DefaultSize, 0 )
@@ -1546,24 +1607,24 @@ class KeyCodeConfigPage ( wx.Panel ):
         SecondSizer.Add( bSizer10, 1, wx.EXPAND, 5 )
         #第二行---右边快捷键部分
         FirstConfigSizer = wx.BoxSizer( wx.VERTICAL )
-        self.m_textCtrl14 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl14 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 ,name="keycode1")
         self.m_textCtrl14.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl14 : self.TextCtrlKeyDown(evt,self.m_textCtrl14))
         self.m_textCtrl14.SetValue(self.getKeyCodeValue(u"收银界面", u"结算"))
         self.m_textCtrl14.SetFocus()
         FirstConfigSizer.Add( self.m_textCtrl14, 0, wx.LEFT, 7 )
-        self.m_textCtrl21 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl21 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 ,name="keycode2")
         self.m_textCtrl21.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl21 : self.TextCtrlKeyDown(evt,self.m_textCtrl21))
         self.m_textCtrl21.SetValue(self.getKeyCodeValue(u"收银界面", u"退货"))
         FirstConfigSizer.Add( self.m_textCtrl21, 0, wx.LEFT|wx.TOP, 7 )
-        self.m_textCtrl22 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl22 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 ,name="keycode3")
         self.m_textCtrl22.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl22 : self.TextCtrlKeyDown(evt,self.m_textCtrl22))
         self.m_textCtrl22.SetValue(self.getKeyCodeValue(u"收银界面", u"删除"))
         FirstConfigSizer.Add( self.m_textCtrl22, 0, wx.LEFT|wx.TOP, 7 )
-        self.m_textCtrl23 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl23 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 ,name="keycode4")
         self.m_textCtrl23.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl23 : self.TextCtrlKeyDown(evt,self.m_textCtrl23))
         self.m_textCtrl23.SetValue(self.getKeyCodeValue(u"收银界面", u"输入查询"))
         FirstConfigSizer.Add( self.m_textCtrl23, 0, wx.LEFT|wx.TOP, 7 )
-        self.m_textCtrl24 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl24 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 ,name="keycode5")
         self.m_textCtrl24.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl24 : self.TextCtrlKeyDown(evt,self.m_textCtrl24))
         self.m_textCtrl24.SetValue(self.getKeyCodeValue(u"收银界面", u"商品数量"))
         FirstConfigSizer.Add( self.m_textCtrl24, 0, wx.LEFT|wx.TOP, 7 )
@@ -1597,15 +1658,15 @@ class KeyCodeConfigPage ( wx.Panel ):
         ThirdSizer.Add( bSizer21, 1, wx.LEFT, 15 )
         #第三行---右边快捷键部分
         bSizer22 = wx.BoxSizer( wx.VERTICAL )
-        self.m_textCtrl20 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl20 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 ,name="keycode6")
         self.m_textCtrl20.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl20 : self.TextCtrlKeyDown(evt,self.m_textCtrl20))
         self.m_textCtrl20.SetValue(self.getKeyCodeValue(u"收款明细", u"支付方式"))
         bSizer22.Add( self.m_textCtrl20, 0, wx.LEFT, 7 )
-        self.m_textCtrl25 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl25 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 ,name="keycode7")
         self.m_textCtrl25.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl25 : self.TextCtrlKeyDown(evt,self.m_textCtrl25))
         self.m_textCtrl25.SetValue(self.getKeyCodeValue(u"收款明细", u"收款金额"))
         bSizer22.Add( self.m_textCtrl25, 0, wx.LEFT|wx.TOP, 7 )
-        self.m_textCtrl26 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl26 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 ,name="keycode8")
         self.m_textCtrl26.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl26 : self.TextCtrlKeyDown(evt,self.m_textCtrl26))
         self.m_textCtrl26.SetValue(self.getKeyCodeValue(u"收款明细", u"手机"))
         bSizer22.Add( self.m_textCtrl26, 0, wx.LEFT|wx.TOP, 7 )
@@ -1647,23 +1708,23 @@ class KeyCodeConfigPage ( wx.Panel ):
         FourthSizer.Add( bSizer26, 1, wx.EXPAND|wx.LEFT, 15 )
         #第四行---右边快捷键部分
         bSizer27 = wx.BoxSizer( wx.VERTICAL )
-        self.m_textCtrl28 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl28 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 ,name="keycode9")
         self.m_textCtrl28.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl28 : self.TextCtrlKeyDown(evt,self.m_textCtrl28))
         self.m_textCtrl28.SetValue(self.getKeyCodeValue(u"退货界面", u"结算"))
         bSizer27.Add( self.m_textCtrl28, 0, wx.LEFT|wx.TOP, 7 )
-        self.m_textCtrl29 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl29 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 ,name="keycode10")
         self.m_textCtrl29.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl29 : self.TextCtrlKeyDown(evt,self.m_textCtrl29))
         self.m_textCtrl29.SetValue(self.getKeyCodeValue(u"退货界面", u"销售"))
         bSizer27.Add( self.m_textCtrl29, 0, wx.LEFT|wx.TOP, 7 )
-        self.m_textCtrl30 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl30 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 ,name="keycode11")
         self.m_textCtrl30.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl30 : self.TextCtrlKeyDown(evt,self.m_textCtrl30))
         self.m_textCtrl30.SetValue(self.getKeyCodeValue(u"退货界面", u"删除"))
         bSizer27.Add( self.m_textCtrl30, 0, wx.LEFT|wx.TOP, 7 )
-        self.m_textCtrl31 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl31 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 ,name="keycode12")
         self.m_textCtrl31.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl31 : self.TextCtrlKeyDown(evt,self.m_textCtrl31))
         self.m_textCtrl31.SetValue(self.getKeyCodeValue(u"退货界面", u"输入查询"))
         bSizer27.Add( self.m_textCtrl31, 0, wx.LEFT|wx.TOP, 7 )
-        self.m_textCtrl32 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl32 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 ,name="keycode13")
         self.m_textCtrl32.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl32 : self.TextCtrlKeyDown(evt,self.m_textCtrl32))
         self.m_textCtrl32.SetValue(self.getKeyCodeValue(u"退货界面", u"商品数量"))
         bSizer27.Add( self.m_textCtrl32, 0, wx.LEFT|wx.TOP, 7 )
@@ -1688,7 +1749,7 @@ class KeyCodeConfigPage ( wx.Panel ):
         FifthSizer.Add( bSizer31, 1, wx.EXPAND|wx.LEFT, 15 )
         #第无行---右边快捷键部分
         bSizer32 = wx.BoxSizer( wx.VERTICAL )
-        self.m_textCtrl33 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_textCtrl33 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, 0 ,name="keycode14")
         self.m_textCtrl33.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.m_textCtrl33 : self.TextCtrlKeyDown(evt,self.m_textCtrl33))
         self.m_textCtrl33.SetValue(self.getKeyCodeValue(u"退款", u"退款方式"))
         bSizer32.Add( self.m_textCtrl33, 0, wx.ALL, 5 )
@@ -1699,7 +1760,6 @@ class KeyCodeConfigPage ( wx.Panel ):
         self.SetSizer( MainSizer )
         self.Layout()
         
-       
         
     def getKeyCodeValue(self,keyPageDescription,operatename): #根据所在的页面和操作的名称 获取快捷键的值,比如F1,F2
         for i in range(0,len(self.dbKeyCode)):
@@ -1716,8 +1776,41 @@ class KeyCodeConfigPage ( wx.Panel ):
             if(keyCode>=340 and keyCode <=351 and isinstance(target,wx._controls.TextCtrl)):
                 str=datas.KeyCodes[keyCode]
                 target.SetValue(str)
-    
-    
+            if(keyCode==75): #显示按钮,隐藏按钮
+                val=self.buttonShow.GetValue();
+                if(val==u"显示按钮[K]"):
+                   self.buttonShow.SetValue(u"隐藏按钮[K]")
+                else :
+                    self.buttonShow.SetValue(u"显示按钮[K]") 
+            if(keyCode==317):    #向下箭头的快捷键
+                name=target.GetName()
+                intVal=int(name[7:len(name)])
+                if(intVal < 14):
+                    nameVal=unicode(int(name[7:len(name)])+1)
+                    selectTarget=wx.FindWindowByName(u"keycode"+nameVal)
+                    selectTarget.SetFocus()
+                    selectTarget.SelectAll()
+                else : #最后一个按钮 向下箭头
+                    selectTarget=wx.FindWindowByName(u"keycode1")
+                    selectTarget.SetFocus()
+                    selectTarget.SelectAll()
+                return    
+            if(keyCode==315):   #向上箭头的快捷键
+                name=target.GetName()
+                intVal=int(name[7:len(name)])
+                if(intVal < 2): #第一个按钮向上箭头
+                    selectTarget=wx.FindWindowByName("keycode14")
+                    selectTarget.SetFocus()
+                    selectTarget.SelectAll()
+                else :  
+                    nameVal=unicode(int(name[7:len(name)])-1)
+                    selectTarget=wx.FindWindowByName(u"keycode"+nameVal)
+                    selectTarget.SetFocus()
+                    selectTarget.SelectAll()
+                return    
+                
+                
+                
                 
     def saveConfig(self,event):
         result=self.checkDataAvailable();
@@ -1725,23 +1818,23 @@ class KeyCodeConfigPage ( wx.Panel ):
             
             wx.MessageBox(result, u"错误",wx.OK | wx.ICON_ERROR)
         else :  #如果没有错误,则更新数据库数据
-            app=wx.GetApp();
             sql="update config_keycode set keyCode = ? ,KeyValue = ? where operatename= ? and keyPageDescription = ? "
-            app.conn.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl14.GetValue()],self.m_textCtrl14.GetValue(),u"结算",u"收银界面",))
-            app.conn.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl21.GetValue()],self.m_textCtrl21.GetValue(),u"退货",u"收银界面",))
-            app.conn.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl22.GetValue()],self.m_textCtrl22.GetValue(),u"删除",u"收银界面",))
-            app.conn.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl23.GetValue()],self.m_textCtrl23.GetValue(),u"输入查询",u"收银界面",))
-            app.conn.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl24.GetValue()],self.m_textCtrl24.GetValue(),u"退款方式",u"收银界面",))
-            app.conn.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl20.GetValue()],self.m_textCtrl20.GetValue(),u"支付方式",u"收款明细",))
-            app.conn.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl25.GetValue()],self.m_textCtrl25.GetValue(),u"收款金额",u"收款明细",))
-            app.conn.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl26.GetValue()],self.m_textCtrl26.GetValue(),u"手机",u"收款明细",))
-            app.conn.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl28.GetValue()],self.m_textCtrl28.GetValue(),u"结算",u"退货界面",))
-            app.conn.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl29.GetValue()],self.m_textCtrl29.GetValue(),u"销售",u"退货界面",))
-            app.conn.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl30.GetValue()],self.m_textCtrl30.GetValue(),u"删除",u"退货界面",))
-            app.conn.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl31.GetValue()],self.m_textCtrl31.GetValue(),u"输入查询",u"退货界面",))
-            app.conn.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl32.GetValue()],self.m_textCtrl32.GetValue(),u"商品数量",u"退货界面",))
-            app.conn.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl33.GetValue()],self.m_textCtrl33.GetValue(),u"退款方式",u"退款",))
-            app.db.commit()
+            Utils.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl14.GetValue()],self.m_textCtrl14.GetValue(),u"结算",u"收银界面",))
+            Utils.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl21.GetValue()],self.m_textCtrl21.GetValue(),u"退货",u"收银界面",))
+            Utils.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl22.GetValue()],self.m_textCtrl22.GetValue(),u"删除",u"收银界面",))
+            Utils.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl23.GetValue()],self.m_textCtrl23.GetValue(),u"输入查询",u"收银界面",))
+            Utils.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl24.GetValue()],self.m_textCtrl24.GetValue(),u"退款方式",u"收银界面",))
+            Utils.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl20.GetValue()],self.m_textCtrl20.GetValue(),u"支付方式",u"收款明细",))
+            Utils.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl25.GetValue()],self.m_textCtrl25.GetValue(),u"收款金额",u"收款明细",))
+            Utils.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl26.GetValue()],self.m_textCtrl26.GetValue(),u"手机",u"收款明细",))
+            Utils.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl28.GetValue()],self.m_textCtrl28.GetValue(),u"结算",u"退货界面",))
+            Utils.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl29.GetValue()],self.m_textCtrl29.GetValue(),u"销售",u"退货界面",))
+            Utils.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl30.GetValue()],self.m_textCtrl30.GetValue(),u"删除",u"退货界面",))
+            Utils.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl31.GetValue()],self.m_textCtrl31.GetValue(),u"输入查询",u"退货界面",))
+            Utils.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl32.GetValue()],self.m_textCtrl32.GetValue(),u"商品数量",u"退货界面",))
+            Utils.execute(sql,(datas.KeyCodesReserve[self.m_textCtrl33.GetValue()],self.m_textCtrl33.GetValue(),u"退款方式",u"退款",))
+            btnConfig=self.buttonShow.GetValue()
+            Utils.commit(sql,(0,btnConfig,u"按钮显示",u"按钮显示"))
             wx.MessageBox(u"                          保存成功           ", u"提醒",wx.OK | wx.ICON_ASTERISK)
             self.GetParent().CloseKeyCodeConfigFrame(None)
                 
@@ -1883,6 +1976,8 @@ class GoodsPage ( wx.Panel ):
         
     def OnKeyDown(self, event):#快捷键
          keyCode=event.GetKeyCode()
+         print(keyCode)
+         
          if(keyCode==13 or keyCode==370):
              self.QueryGoods()
          if(keyCode==27):
@@ -2172,7 +2267,6 @@ class ReturnOrderPage ( wx.Panel ):
         self.goodsGrid.Bind( wx.EVT_MOUSEWHEEL, self.PreventEvent )
         self.goodsGrid.Bind( wx.EVT_SET_FOCUS, self.PreventEvent )
         
-        
     def PreventEvent(self,event): ##取消表格的所有点击事件,点击默认选中 输入查询这个框
          self.m_textCtrl4.SetFocus()
         
@@ -2220,3 +2314,137 @@ class ReturnOrderPage ( wx.Panel ):
             self.m_textCtrl4.SelectAll()
         return    
     
+
+class printConfigPage ( wx.Panel ):
+    
+    def __init__( self, parent ):
+        wx.Panel.__init__ ( self, parent, id = wx.ID_ANY, pos = wx.DefaultPosition, size = wx.Size( 600,600 ), style = wx.TAB_TRAVERSAL )
+        
+        sql="select head1,head2,foot1,foot2 from config_print"
+        self.configVal=Utils.query(sql,None)
+        
+        bSizer2 = wx.BoxSizer( wx.VERTICAL )
+        
+        bSizer3 = wx.BoxSizer( wx.HORIZONTAL )
+        
+        self.m_staticText1 = wx.StaticText( self, wx.ID_ANY, u"头部1", wx.DefaultPosition, wx.DefaultSize, 0 )
+        
+        self.m_staticText1.Wrap( -1 )
+        bSizer3.Add( self.m_staticText1, 0, wx.ALIGN_CENTER|wx.LEFT, 80 )
+        
+        self.head1 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize,  wx.TE_PROCESS_ENTER ,name="printco1")
+        self.head1.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.head1 : self.TextCtrlKeyDown(evt,self.head1))
+        self.head1.SetValue(self.configVal[0][0])
+        self.head1.SetMinSize( wx.Size( 300,-1 ) )
+        
+        bSizer3.Add( self.head1, 0, wx.ALIGN_CENTER|wx.LEFT, 35 )
+        
+        
+        bSizer2.Add( bSizer3, 2, wx.EXPAND, 5 )
+        
+        bSizer4 = wx.BoxSizer( wx.HORIZONTAL )
+        
+        self.m_staticText2 = wx.StaticText( self, wx.ID_ANY, u"头部2", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText2.Wrap( -1 )
+        bSizer4.Add( self.m_staticText2, 0, wx.ALIGN_CENTER|wx.LEFT, 80 )
+        
+        self.head2 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_PROCESS_ENTER ,name="printco2")
+        self.head2.SetMinSize( wx.Size( 300,-1 ) )
+        self.head2.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.head2 : self.TextCtrlKeyDown(evt,self.head2))
+        self.head2.SetValue(self.configVal[0][1])
+        
+        bSizer4.Add( self.head2, 0, wx.ALIGN_CENTER|wx.LEFT, 35 )
+        
+        
+        bSizer2.Add( bSizer4, 2, wx.EXPAND, 5 )
+        
+        bSizer5 = wx.BoxSizer( wx.HORIZONTAL )
+        
+        self.m_staticText5 = wx.StaticText( self, wx.ID_ANY, u"底部1", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText5.Wrap( -1 )
+        bSizer5.Add( self.m_staticText5, 0, wx.ALIGN_CENTER|wx.LEFT, 80 )
+        
+        self.foot1 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_PROCESS_ENTER ,name="printco3")
+        self.foot1.SetMinSize( wx.Size( 300,-1 ) )
+        self.foot1.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.foot1 : self.TextCtrlKeyDown(evt,self.foot1))
+        self.foot1.SetValue(self.configVal[0][2])
+        
+        bSizer5.Add( self.foot1, 0, wx.ALIGN_CENTER|wx.LEFT, 35 )
+        
+        
+        bSizer2.Add( bSizer5, 2, wx.EXPAND, 5 )
+        
+        bSizer6 = wx.BoxSizer( wx.HORIZONTAL )
+        
+        self.m_staticText3 = wx.StaticText( self, wx.ID_ANY, u"底部2", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.m_staticText3.Wrap( -1 )
+        bSizer6.Add( self.m_staticText3, 0, wx.ALIGN_CENTER|wx.LEFT, 80 )
+        
+        self.foot2 = wx.TextCtrl( self, wx.ID_ANY, wx.EmptyString, wx.DefaultPosition, wx.DefaultSize, wx.TE_PROCESS_ENTER ,name="printco4")
+        self.foot2.SetMinSize( wx.Size( 300,-1 ) )
+        self.foot2.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.foot2 : self.TextCtrlKeyDown(evt,self.foot2))
+        self.foot2.SetValue(self.configVal[0][3])
+        bSizer6.Add( self.foot2, 0, wx.ALIGN_CENTER|wx.LEFT, 35 )
+        bSizer2.Add( bSizer6, 2, wx.EXPAND, 5 )
+        bSizer7 = wx.BoxSizer( wx.VERTICAL )
+        self.saveBtn = wx.Button( self, wx.ID_ANY, u"保存[Enter]", wx.DefaultPosition, wx.DefaultSize, 0 )
+        self.saveBtn.Bind(wx.EVT_BUTTON, self.saveConfig, self.saveBtn) 
+        
+        
+        bSizer7.Add( self.saveBtn, 0, wx.ALIGN_CENTER|wx.ALIGN_CENTER_HORIZONTAL|wx.ALL, 5 )
+        
+        self.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self : self.TextCtrlKeyDown(evt,self))
+        bSizer2.Add( bSizer7, 1, wx.EXPAND, 5 )
+        
+        
+        self.SetSizer( bSizer2 )
+        self.Layout()
+    def saveConfig(self,event):
+        sql="update config_print set head1 = ? ,head2 = ? ,foot1 = ? ,foot2 = ? where id =1"
+        Utils.commit(sql,(self.head1.GetValue(),self.head2.GetValue(),self.foot1.GetValue(),self.foot2.GetValue(),))
+        wx.MessageBox(u"                  保存成功        ", u"提醒",wx.OK | wx.ICON_ASTERISK)
+        self.GetParent().closeprintConfigFrame(None)
+    
+    
+    def TextCtrlKeyDown(self,event,target):
+        keyCode=event.GetKeyCode()
+
+        if(keyCode==317):    #向下箭头的快捷键
+            name=target.GetName()
+            intVal=int(name[7:len(name)])
+            if(intVal < 4):
+                nameVal=unicode(int(name[7:len(name)])+1)
+                selectTarget=wx.FindWindowByName(u"printco"+nameVal)
+                selectTarget.SetFocus()
+                selectTarget.SelectAll()
+            else : #最后一个按钮 向下箭头
+                selectTarget=wx.FindWindowByName(u"printco1")
+                selectTarget.SetFocus()
+                selectTarget.SelectAll()
+            return    
+        if(keyCode==315):   #向上箭头的快捷键
+            name=target.GetName()
+            intVal=int(name[7:len(name)])
+            if(intVal < 2): #第一个按钮向上箭头
+                selectTarget=wx.FindWindowByName("printco4")
+                selectTarget.SetFocus()
+                selectTarget.SelectAll()
+            else :  
+                nameVal=unicode(int(name[7:len(name)])-1)
+                selectTarget=wx.FindWindowByName(u"printco"+nameVal)
+                selectTarget.SetFocus()
+                selectTarget.SelectAll()
+            return
+        if(keyCode==13 or keyCode==370):
+            self.saveConfig(None)
+        event.Skip()     
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
