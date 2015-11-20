@@ -19,51 +19,36 @@ class MyApp(wx.App):
         self.conn = self.db.cursor()
         
         
-        
-        
         #打印小票
-        self.pdata = wx.PrintData()
-        self.pdata.SetPaperId(wx.PAPER_LETTER)
-        self.pdata.SetOrientation(wx.PORTRAIT)
-        data = wx.PrintDialogData(self.pdata)
-        
-        printer = wx.Printer(data)
-        
-        ConfigData=[(u'\u5c0f\u6e14\u6751\u7f8e\u98df\u5e7f\u573a', u'\u5c0f\u6e14\u6751\u5bf9\u8d26\u5355', u'\u5c0f\u6e14\u6751\u6b22\u8fce\u60a8 !\u7535\u8bdd 0576-88678777', u'\u53f0\u5dde\u5c0f\u6e14\u6751\u5eb7\u5e73\u8def\u5e97,\u6b22\u8fce\u60a8\u7684\u5149\u4e34')]
-        goodsData=[{u'\u5546\u54c1\u7f16\u7801': u'0005', u'\u6298\u6263': u'0.98', u'\u5355\u4ef7': u'200.01', u'\u91d1\u989d': u'196.01', u'\u5546\u54c1\u6761\u7801': u'1', u'\u5355\u4f4d': u'\u4ef6', u'\u5546\u54c1\u540d\u79f0': u'\u516d\u795e\u6e05\u51c9\u723d\u80a4\u6c90\u6d74\u9732200ml', u'\u6570\u91cf': u'1'}, {u'\u5546\u54c1\u7f16\u7801': u'012205', u'\u6298\u6263': u'0.99', u'\u5355\u4ef7': u'159.05', u'\u91d1\u989d': u'314.92', u'\u5546\u54c1\u6761\u7801': u'2', u'\u5355\u4f4d': u'\u4ef6', u'\u5546\u54c1\u540d\u79f0': u'\u516d\u795e\u827e\u53f6\u5065\u80a4\u6c90\u6d74\u9732\uff08\u6e05\u51c9\u578b\uff09450ml', u'\u6570\u91cf': u'2'}, {u'\u5546\u54c1\u7f16\u7801': u'13213', u'\u6298\u6263': u'0.1', u'\u5355\u4ef7': u'12.05', u'\u91d1\u989d': u'2.41', u'\u5546\u54c1\u6761\u7801': u'3', u'\u5355\u4f4d': u'\u7bb1', u'\u5546\u54c1\u540d\u79f0': u'\u5546\u54c1233', u'\u6570\u91cf': u'2'}]
-        OtherData = ['2015111916345658', u'196.0',u"想想想"]
-        
-        printout = Print.GoodsPrinter(ConfigData,goodsData, u"title",OtherData)
-        
-        printer.Print(None,printout,True)
-        
-        
-        
-        
-        
-        
-#        for  i in range(0,1000):
-#             sql="insert into sale_order(id,date,salerid,salername,purchtype,customerid,customername,amout)values (? , ? , ? , ? , ? , ? , ? ,?)"
-#             param=('20151117090416000000879475', '2015-11-17', u'123', u'\u5c0f\u674e', u'1', u'', u'', u'196.0')
-#             Utils.commit(sql,param)
-#        self.conn.close()    
-#        self.LogIn=False;
-#        self.doLogIn();
-#        if(not self.LogIn):
-#            #如果未登录  关闭数据库链接,退出App
-#            return False;   
+#        self.pdata = wx.PrintData()
+#        self.pdata.SetPaperId(wx.PAPER_LETTER)
+#        self.pdata.SetOrientation(wx.PORTRAIT)
+#        data = wx.PrintDialogData(self.pdata)
+#        printer = wx.Printer(data)
+#        ConfigData=[(u'\u5c0f\u6e14\u6751\u7f8e\u98df\u5e7f\u573a', u'\u5c0f\u6e14\u6751\u5bf9\u8d26\u5355', u'\u5c0f\u6e14\u6751\u6b22\u8fce\u60a8 !\u7535\u8bdd 0576-88678777', u'\u53f0\u5dde\u5c0f\u6e14\u6751\u5eb7\u5e73\u8def\u5e97,\u6b22\u8fce\u60a8\u7684\u5149\u4e34')]
+#        goodsData=[{u'\u5546\u54c1\u7f16\u7801': u'0005', u'\u6298\u6263': u'0.98', u'\u5355\u4ef7': u'200.01', u'\u91d1\u989d': u'196.01', u'\u5546\u54c1\u6761\u7801': u'1', u'\u5355\u4f4d': u'\u4ef6', u'\u5546\u54c1\u540d\u79f0': u'\u516d\u795e\u6e05\u51c9\u723d\u80a4\u6c90\u6d74\u9732200ml', u'\u6570\u91cf': u'1'}, {u'\u5546\u54c1\u7f16\u7801': u'012205', u'\u6298\u6263': u'0.99', u'\u5355\u4ef7': u'159.05', u'\u91d1\u989d': u'314.92', u'\u5546\u54c1\u6761\u7801': u'2', u'\u5355\u4f4d': u'\u4ef6', u'\u5546\u54c1\u540d\u79f0': u'\u516d\u795e\u827e\u53f6\u5065\u80a4\u6c90\u6d74\u9732\uff08\u6e05\u51c9\u578b\uff09450ml', u'\u6570\u91cf': u'2'}, {u'\u5546\u54c1\u7f16\u7801': u'13213', u'\u6298\u6263': u'0.1', u'\u5355\u4ef7': u'12.05', u'\u91d1\u989d': u'2.41', u'\u5546\u54c1\u6761\u7801': u'3', u'\u5355\u4f4d': u'\u7bb1', u'\u5546\u54c1\u540d\u79f0': u'\u5546\u54c1233', u'\u6570\u91cf': u'2'}]
+#        OtherData = ['2015111916345658', u'196.0',u"想想想"]
+#        printout = Print.GoodsPrinter(ConfigData,goodsData, u"小票打印",OtherData)
+#        printer.Print(None,printout,True)
         
         self.Id="111";
         self.Name="222"     
+        
+        self.LogIn=False;
+        self.doLogIn();
+        if(not self.LogIn):
+            #如果未登录  关闭数据库链接,退出App
+            return False;   
+        
+        
         #初始化Frame
-#        self.Homeframe=Frames.HomeFrame()
-        Frames.cashFrame()
+        self.Homeframe=Frames.HomeFrame()
         return True
     
     
     def release(self): #app关闭 释放资源
          self.Homeframe.Destroy()
-#        pass
+         self.conn.close()
     
     
     def showDialogWithErrorMsg(self,ErrorMsg):

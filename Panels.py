@@ -775,6 +775,7 @@ class getMoneyPage ( wx.Panel):
             Utils.commit(sql,(saleId,Utils.getDateStr(),app.Id,app.Name,payWayValue,u"",u"",self.cashMoney,))
             
             
+            
             #打印小票
             self.pdata = wx.PrintData()
             self.pdata.SetPaperId(wx.PAPER_LETTER)
@@ -787,9 +788,12 @@ class getMoneyPage ( wx.Panel):
             sql="select head1,head2,foot1,foot2 from config_print where id = 1"
             ConfigData=Utils.query(sql,None)
             
+            
+            app=wx.GetApp()
             OtherData=list()
             OtherData.append(saleId)
             OtherData.append(self.cashMoney)
+            OtherData.append(app.Name)
             
             printout1 = Print.GoodsPrinter(ConfigData, self.GoodsData , "title" , OtherData)
             
