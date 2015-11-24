@@ -32,8 +32,8 @@ class GoodsPrinter(wx.Printout):
         dc = self.GetDC()
         dc.SetUserScale(15, 15)
         dc.SetFont(self.common_font)
-        self.x=30   #左上角距离x
-        self.y=30   #左上角距离y
+        self.x=5   #左上角距离x
+        self.y=5   #左上角距离y
         
         self.width=6*28.3464
         

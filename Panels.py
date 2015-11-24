@@ -207,7 +207,7 @@ class CashPage ( wx.Panel ):
         PanelSizer.Add( ButtonSizer, 1, wx.ALIGN_CENTER|wx.ALIGN_CENTER_HORIZONTAL|wx.EXPAND|wx.LEFT, 10 )
         
         ifshowBtn=Utils.query(sql,(u"按钮显示",))[0][2]
-        if(ifshowBtn[0:2]=="隐藏"):
+        if(ifshowBtn[0:2]==u"隐藏"):
             self.balanceBtn.Hide()
             self.returnBtn.Hide()
             self.delBtn.Hide()
@@ -519,14 +519,31 @@ class CashPage ( wx.Panel ):
                 return i
         return ""                             
            
+    def DealoffPriceSale(self,data): #特价的处理
+        goodsId=data[0]
+        sql='select goodsId , oldprice , offprice , beginTime ,endTime from sale_offprice where goodsId = ? ' 
+        rs=Utils.query(sql,(goodsId,))
+        if(len(rs)<=0):#如果没有特价信息,返回原来数据
+            return data;
+        else:
+            currentData=rs[len(rs)-1]   #获取最新的该商品价格信息
+            nowtime=Utils.getDateStr()
+            if(Utils.compare_time(nowtime,currentData[3],currentData[4])):#如果在特价时间内
+                return (data[0],data[1],data[2],data[3],currentData[2],data[5],)#返回数据 元祖不可修改 返回新元祖
+           
+           
     def QueryGoods(self ,event ,target): #当用户输入商品条形码,按回车键触发
-        goodsId=self.m_textCtrl4.GetValue();
+        barcode=self.m_textCtrl4.GetValue();
         sql="select id,barcode,name,mainunit,saleprice,discount  from goods_info  where barcode= ? "
-        result=  Utils.query(sql,(goodsId,))
+        result=  Utils.query(sql,(barcode,))
+        
         if(len(result)==0): #未找到商品
             wx.MessageBox(u"                   未找到商品         ", u"提醒",wx.OK | wx.ICON_ASTERISK)
             self.m_textCtrl4.Clear()
             return
+        #查看商品是否有特价,如果是,修改saleprice
+        result[0]=self.DealoffPriceSale(result[0])
+        
         gooodsRepeatRow=self.checkGoodsRepeat(result[0][1])
         if(not gooodsRepeatRow==""):#判断商品是否已经购买过,如果已经购买过,在原来基础上+1
             singleprice=Decimal(self.goodsGrid.GetCellValue(gooodsRepeatRow,4)) #单价
@@ -772,9 +789,12 @@ class getMoneyPage ( wx.Panel):
             app=wx.GetApp()
             sql="insert into sale_order(id,date,salerid,salername,purchtype,customerid,customername,amout)values (? , ? , ? , ? , ? , ? , ? ,?)"
             payWayValue=self.getPayWayval(self.m_textCtrl8.GetValue())
-            Utils.commit(sql,(saleId,Utils.getDateStr(),app.Id,app.Name,payWayValue,u"",u"",self.cashMoney,))
+            Utils.execute(sql,(saleId,Utils.getDateStr(),app.Id,app.Name,payWayValue,u"",u"",self.cashMoney,))
             
-            
+            #生成单据成功,流水号+1
+            datestr=Utils.getDateStr2()
+            sql='update id_generater set id = id +1 where date = ? and type = ?'
+            Utils.commit(sql,(datestr,'saleorder',))
             
             #打印小票
             self.pdata = wx.PrintData()
@@ -893,7 +913,7 @@ class ReturnPage ( wx.Panel ):
         PanelSizer.Add( ButtonSizer, 1, wx.ALIGN_CENTER|wx.ALIGN_CENTER_HORIZONTAL|wx.EXPAND|wx.LEFT, 10 )
         
         ifshowBtn=Utils.query(sql,(u"按钮显示",))[0][2]
-        if(ifshowBtn[0:2]=="隐藏"):
+        if(ifshowBtn[0:2]==u"隐藏"):
             self.balanceBtn.Hide()
             self.returnBtn.Hide()
             self.delBtn.Hide()

@@ -34,11 +34,11 @@ class MyApp(wx.App):
         self.Id="111";
         self.Name="222"     
         
-        self.LogIn=False;
-        self.doLogIn();
-        if(not self.LogIn):
-            #如果未登录  关闭数据库链接,退出App
-            return False;   
+#        self.LogIn=False;
+#        self.doLogIn();
+#        if(not self.LogIn):
+#            #如果未登录  关闭数据库链接,退出App
+#            return False;   
         
         
         #初始化Frame
