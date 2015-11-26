@@ -1,6 +1,28 @@
 #coding:utf-8
-import time,random,wx
+import time,random,wx,urllib2,urllib,socket,cookielib,json
 PrintSQL=True
+
+#HTTP  Config
+TIMEOUT=10
+cookie = cookielib.CookieJar()
+opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookie))
+PreFixUrl = "http://192.168.128.206/3/"
+Action_singIn = "checkPwd.do"   ###登陆接口,需求返回 name,id,flag  String,String,Boolean
+Action_getOffInfo = "getOffSaleGoodsInfo" ###获取特价商品接口  需求返回List<Map>字段 goodsId,barCode,oldprice,offprice,beginTime,endTime
+def sendHttp(url,data): #发送http请求并且解析json返回Map(dic)
+    if(not data==None):
+        data=urllib.urlencode(data)
+    try:
+         response = opener.open(PreFixUrl+url,data,timeout=TIMEOUT)
+         return json.loads(response.read())
+    except urllib2.URLError ,e:  
+         if(isinstance(e, urllib2.HTTPError)): #httperror是urlError的子类 #返回错误
+             print(e)
+         elif(isinstance(e, urllib2.URLError)): ###未联网
+             print(e)
+         return ""
+
+
 def transFerGirdData(Grid): #将Grid信息转换为List<Map<String,String>
     rowNum=Grid.GetNumberRows()
     colNum=Grid.GetNumberCols()
@@ -52,6 +74,7 @@ def compare_time(now_time,start_t,end_t):   #判断当前时间是否在 两时�
     if (float(now_time) >= float(s_time)) and (float(now_time) <= float(e_time)):
         return True
     return False
+
 
 
 

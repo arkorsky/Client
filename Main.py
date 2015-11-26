@@ -34,11 +34,21 @@ class MyApp(wx.App):
         self.Id="111";
         self.Name="222"     
         
-#        self.LogIn=False;
-#        self.doLogIn();
-#        if(not self.LogIn):
-#            #如果未登录  关闭数据库链接,退出App
-#            return False;   
+        
+        
+        
+        data={"username":"123","password":"a123456","ismemory":""}
+        rs=Utils.sendHttp('checkPwd.do',data)
+        print(rs)
+        print(type(rs))
+         
+     
+        
+        self.LogIn=False;
+        self.doLogIn();
+        if(not self.LogIn):
+            #如果未登录  关闭数据库链接,退出App
+            return False;   
         
         
         #初始化Frame
@@ -66,23 +76,42 @@ class MyApp(wx.App):
                  if(username==u'' or password==''):
                      self.showDialogWithErrorMsg(u"用户名或密码不能为空")
                  else :
-                     self.conn.execute("select id,name,password from sys_user where username= ? ",(username,))
-                     res =self.conn.fetchall()
-                     if(not len(res)>0):
-                          self.showDialogWithErrorMsg(u"用户名不存在")
-                     else:
-                         m1=md5.new()
-                         md5psw=m1.update(password)      
-                         if(res[0][2]==m1.hexdigest()):
-                             self.LogIn=True
-                             self.Id=res[0][0] # Id,
-                             self.Name=res[0][1] # Name,
+                     data={"username":username,"password":password}
+                     rs=Utils.sendHttp(Utils.Action_singIn,data)
+                     if(not rs==""): #rs不为空,说明是联网状态
+                        if(not rs['flag']):
+                            self.showDialogWithErrorMsg(u"账号或密码错误")
+                        else: #账号密码正确
+                            self.doAfterLogIn(rs['id'],rs['name'])
+                            self.doAfterLogInWhenOnline()
+                     else : #rs为空,说明是断网状态或服务器有问题,查询本地数据库
+                         self.conn.execute("select id,name,password from sys_user where username= ? ",(username,))
+                         res =self.conn.fetchall()
+                         if(not len(res)>0):
+                              self.showDialogWithErrorMsg(u"用户名不存在")
                          else:
-                             self.showDialogWithErrorMsg(u"账号或密码错误")
+                             m1=md5.new()
+                             md5psw=m1.update(password)      
+                             if(res[0][2]==m1.hexdigest()):
+                                 self.doAfterLogIn(res[0][0],res[0][0])
+                             else:
+                                 self.showDialogWithErrorMsg(u"账号或密码错误")
              if val == wx.ID_CANCEL:
                  return;
-    
-    
+             
+    def doAfterLogIn(self,id,name): #登陆成功后进行操作
+        self.LogIn=True
+        self.Id=Id # Id,
+        self.Name=name # Name,
+        
+    def doAfterLogInWhenOnline(self):#登陆成功后,联网状态进行的额外操作
+        #特价商品
+        #
+        
+        
+        
+        pass
+        
 
 def main():
     try:

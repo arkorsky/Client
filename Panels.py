@@ -59,8 +59,8 @@ class HomePage ( wx.Panel ):
         self.keyCodeConfig = wx.Button( self, wx.ID_ANY, u"快捷键配置[F8]", wx.DefaultPosition, wx.DefaultSize, 0 )
         ButtomGridSizer.Add( self.keyCodeConfig, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
         
-        self.dailyReportBtn = wx.Button( self, wx.ID_ANY, u"销售日结[F9]", wx.DefaultPosition, wx.DefaultSize, 0 )
-        ButtomGridSizer.Add( self.dailyReportBtn, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
+#        self.dailyReportBtn = wx.Button( self, wx.ID_ANY, u"销售日结[F9]", wx.DefaultPosition, wx.DefaultSize, 0 )
+#        ButtomGridSizer.Add( self.dailyReportBtn, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
         
         self.ExitBtn = wx.Button( self, wx.ID_ANY, u"退出[ESC]", wx.DefaultPosition, wx.DefaultSize, 0 )
         ButtomGridSizer.Add( self.ExitBtn, 0, wx.ALIGN_CENTER|wx.ALL, 5 )
@@ -82,7 +82,7 @@ class HomePage ( wx.Panel ):
         self.printSettingsBtn.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.returnQueryBtn.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.keyCodeConfig.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
-        self.dailyReportBtn.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
+#        self.dailyReportBtn.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         self.ExitBtn.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
         
         
@@ -687,7 +687,7 @@ class getMoneyPage ( wx.Panel):
         #第三行
         bSizer10 = wx.BoxSizer( wx.HORIZONTAL )
         
-        str=self.getKeyCodeAndValueByName(u"支付方式")
+        str=self.getKeyCodeAndValueByName(u"收款方式")
         self.m_staticText7 = wx.StaticText( self, wx.ID_ANY,  u"支付方式["+str[1]+"]", wx.DefaultPosition, wx.DefaultSize, 0 )
         self.m_staticText7.Wrap( -1 )
         self.m_staticText7.SetFont( wx.Font( 18, 70, 90, 90, False, "宋体" ) )
@@ -747,6 +747,7 @@ class getMoneyPage ( wx.Panel):
         self.phone.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self.phone : self.OnKeyDown(evt,self.phone))
         self.Bind(wx.EVT_KEY_DOWN, lambda evt, target=self : self.OnKeyDown(evt,self))
         
+        self.cashNum.SetFocus()
         
     def getPayWayval(self,PayText): #根据select的text获取value
         for i in range(0,len(self.PayWay)):
@@ -824,8 +825,10 @@ class getMoneyPage ( wx.Panel):
             data=self.m_textCtrl7.GetValue();
             if(data=="输入有误"):
                 wx.MessageBox(u"                输入有误", u"错误")
+                return
             if(data=="收款不足"):
                 wx.MessageBox(u"                收款不足", u"错误")
+                return
             wx.MessageBox(u"                输入有误", u"错误")
             return
             
