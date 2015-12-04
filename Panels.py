@@ -499,6 +499,60 @@ class CashPage ( wx.Panel ):
             wx.MessageBox(u"        未找到要删除的商品         ", u"提醒",wx.OK | wx.ICON_ASTERISK)  
         return         
     
+    def CheckTimeAvailable(self,beginDate,endDate,beginTime,endTime): #判断商品时间是否处于有效特价时间内
+        nowDateStr=Utils.getFormatDate("%Y-%m-%d");
+        nowDatetimeStr=Utils.getFormatDate("%Y-%m-%d %H:%M")
+        nowTimeStr=Utils.getFormatDate("%H:%M")
+        cmRs=Utils.comparTo(beginDate,endDate,'%Y-%m-%d')
+        if(cmRs == 1):
+            return False;
+        elif(cmRs == 0):
+            if(Utils.comparTo(beginTime,endTime,"%H:%M") == -1):
+                return Utils.compare_time(nowDatetimeStr,beginDate+" "+beginTime,endDate+" "+endTime,"%Y-%m-%d %H:%M")
+            else:
+                return False
+        elif(cmRs == -1):
+            #比较begintime,endtime
+            timeRs=Utils.comparTo(beginTime,endTime,"%H:%M")
+            if(timeRs == 0):  #begintime=endtime
+                if(not Utils.compare_time(nowDateStr,beginDate,endDate,"%Y-%m-%d")): #当前日子在两日期之外
+                    return False;
+                if(Utils.comparTo(nowDateStr,beginDate,"%Y-%m-%d")==0): #当前日期等于起始日期
+                    if(Utils.comparTo(nowDatetimeStr,beginDate+" "+beginTime,"%Y-%m-%d %H:%M") == 1):
+                       return True
+                    else :
+                       return False
+                if(Utils.comparTo(nowDateStr,endDate,"%Y-%m-%d")==0): #当前日期等于终止日期   
+                    if(Utils.comparTo(nowDatetimeStr,endDate+" "+endTime,"%Y-%m-%d %H:%M") == -1):
+                        return True
+                    else:
+                        return False
+                #当前日期 在两个日期之间
+                return True    
+            if(timeRs == -1):
+                if(Utils.compare_time(nowDateStr,beginDate,endDate,"%Y-%m-%d")): #当前日期 在起始和终止日期之间(包括)  判断时间戳  
+                    if(Utils.comparTo(nowTimeStr,beginTime,"%H:%M")==1 and Utils.comparTo(nowTimeStr,endTime,"%H:%M") == -1):
+                       return True
+                return False;
+            if(timeRs == 1):
+                if(not Utils.compare_time(nowDateStr,beginDate,endDate,"%Y-%m-%d")): #当前日期在两个日期之外
+                    return False
+                if(Utils.comparTo(nowDateStr,beginDate,"%Y-%m-%d")==0): #当前日期等于起始日期
+                    if(Utils.comparTo(nowTimeStr,beginTime,"%H:%M")==1): #大于begintime时间戳
+                        return True
+                    else:
+                        return False
+                if(Utils.comparTo(nowDateStr,endDate,"%Y-%m-%d")==0): #当前日期等于终止日期
+                    if(Utils.comparTo(nowTimeStr,endTime,"%H:%M")==-1): #小雨endtime时间戳
+                        return True
+                    else :
+                        return False
+                #当前时间在起始,终止日期之间(不包括边界)
+                if(Utils.comparTo(nowTimeStr,beginTime==1,"%H:%M")): #要大于beginTime的时间戳返回True
+                   return True
+                return False
+    
+    
     def RecalculateCachNum(self):#重新计算应收金额
         RowNum=self.goodsGrid.GetNumberRows()
         cashAmount=Decimal(0.00)
@@ -521,22 +575,21 @@ class CashPage ( wx.Panel ):
            
     def DealoffPriceSale(self,data): #特价的处理
         goodsId=data[0]
-        sql='select goodsId , oldprice , offprice , beginTime ,endTime from sale_offprice where goodsId = ? ' 
+        sql='select goodsId , offprice , begindate , enddate , beginTime ,endTime from sale_offprice where goodsId = ? ' 
         rs=Utils.query(sql,(goodsId,))
         if(len(rs)<=0):#如果没有特价信息,返回原来数据
             return data;
         else:
             currentData=rs[len(rs)-1]   #获取最新的该商品价格信息
-            nowtime=Utils.getDateStr()
-            if(Utils.compare_time(nowtime,currentData[3],currentData[4])):#如果在特价时间内
-                return (data[0],data[1],data[2],data[3],currentData[2],data[5],)#返回数据 元祖不可修改 返回新元祖
-           
+            if(self.CheckTimeAvailable(currentData[2],currentData[3], currentData[4], currentData[5])): #如果在特价时间内
+                return (data[0],data[1],data[2],data[3],currentData[1],data[5],)#返回数据 元祖不可修改 返回新元祖
+            else:  #如果查找到特价商品,不在特价时间内 返回原数据
+                return data;
            
     def QueryGoods(self ,event ,target): #当用户输入商品条形码,按回车键触发
         barcode=self.m_textCtrl4.GetValue();
-        sql="select id,barcode,name,mainunit,saleprice,discount  from goods_info  where barcode= ? "
+        sql="select id,barcode,name,mainunit,saleprice,discount  from goods_info  where barcode= ? and state = 1"
         result=  Utils.query(sql,(barcode,))
-        
         if(len(result)==0): #未找到商品
             wx.MessageBox(u"                   未找到商品         ", u"提醒",wx.OK | wx.ICON_ASTERISK)
             self.m_textCtrl4.Clear()
@@ -2435,7 +2488,7 @@ class printConfigPage ( wx.Panel ):
     
     def TextCtrlKeyDown(self,event,target):
         keyCode=event.GetKeyCode()
-
+        print(keyCode)
         if(keyCode==317):    #向下箭头的快捷键
             name=target.GetName()
             intVal=int(name[7:len(name)])
@@ -2464,6 +2517,9 @@ class printConfigPage ( wx.Panel ):
             return
         if(keyCode==13 or keyCode==370):
             self.saveConfig(None)
+        if(keyCode==27):
+            self.GetParent().closeprintConfigFrame(None)
+            
         event.Skip()     
             
             

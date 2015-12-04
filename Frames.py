@@ -11,7 +11,7 @@ class HomeFrame(wx.Frame): #进入首页的Frame
          self.Bind(wx.EVT_CLOSE,self.CloseHomeFrame)
          self.Centre()
          app=wx.GetApp()
-         Data=(u"收银员编号   :    "+str(app.Id),u"收银员名称   :     "+app.Name,u"      收银日期  :     "+Utils.getDateStr())
+         Data=(u"收银员编号   :    "+str(app.Id),u"收银员名称   :     "+str(app.Name),u"      收银日期  :     "+Utils.getDateStr())
          Panels.HomePage(self,Data);
          self.Show()
              

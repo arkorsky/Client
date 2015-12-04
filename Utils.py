@@ -1,27 +1,7 @@
 #coding:utf-8
-import time,random,wx,urllib2,urllib,socket,cookielib,json
-PrintSQL=True
+import time,datetime,random,wx,urllib2,urllib,socket,cookielib,json
 
-#HTTP  Config
-TIMEOUT=10
-cookie = cookielib.CookieJar()
-opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(cookie))
-PreFixUrl = "http://192.168.128.206/3/"
-Action_singIn = "checkPwd.do"   ###登陆接口,需求返回 name,id,flag  String,String,Boolean
-Action_getOffInfo = "getOffSaleGoodsInfo" ###获取特价商品接口  需求返回List<Map>字段 goodsId,barCode,oldprice,offprice,beginTime,endTime
-def sendHttp(url,data): #发送http请求并且解析json返回Map(dic)
-    if(not data==None):
-        data=urllib.urlencode(data)
-    try:
-         response = opener.open(PreFixUrl+url,data,timeout=TIMEOUT)
-         return json.loads(response.read())
-    except urllib2.URLError ,e:  
-         if(isinstance(e, urllib2.HTTPError)): #httperror是urlError的子类 #返回错误
-             print(e)
-         elif(isinstance(e, urllib2.URLError)): ###未联网
-             print(e)
-         return ""
-
+PrintSQL=True  #是否打印SQL语句
 
 def transFerGirdData(Grid): #将Grid信息转换为List<Map<String,String>
     rowNum=Grid.GetNumberRows()
@@ -58,6 +38,8 @@ def getReturnOrderId(): #生成退货单号
     ISOTIMEFORMAT='%Y%m%d%H%M%S'
     return time.strftime( ISOTIMEFORMAT, time.localtime())+str(random.randint(10, 99))
 
+def getFormatDate(fmt): #获取时间str
+     return time.strftime( fmt, time.localtime())
 
 def getDateStr(): #获取时间str
      ISOTIMEFORMAT='%Y-%m-%d'
@@ -67,13 +49,29 @@ def getDateStr2(): #获取时间str
      ISOTIMEFORMAT='%Y%m%d'
      return time.strftime( ISOTIMEFORMAT, time.localtime())
 
-def compare_time(now_time,start_t,end_t):   #判断当前时间是否在 两时间间隔之间  #格式 yyyy-MM-dd
-    s_time = time.mktime(time.strptime(start_t,'%Y-%m-%d')) 
-    e_time = time.mktime(time.strptime(end_t,'%Y-%m-%d'))
-    now_time = time.mktime(time.strptime(now_time,'%Y-%m-%d'))
+def compare_time(now_time,start_t,end_t,fmt):   #判断当前时间是否在 两时间间隔之间 相同也是True
+    s_time = time.mktime(time.strptime(start_t,fmt)) 
+    e_time = time.mktime(time.strptime(end_t,fmt))
+    now_time = time.mktime(time.strptime(now_time,fmt))
     if (float(now_time) >= float(s_time)) and (float(now_time) <= float(e_time)):
         return True
     return False
+
+
+def comparTo(date1,date2,fmt): #判断日期大小(支持08:00这种格式),前面的大 返回1,相同0,后面大返回-1
+    if(fmt=="%H:%M"):
+        fmt="%Y-%m-%d %H:%M"
+        date1="2015-01-01 "+date1
+        date2="2015-01-01 "+date2
+    d1=float(time.mktime(time.strptime(date1,fmt))) 
+    d2=float(time.mktime(time.strptime(date2,fmt)))
+    if(d1==d2):
+        return 0;
+    if(d1>d2):
+        return 1;
+    if(d1<d2):
+        return -1;
+    
 
 
 
@@ -92,7 +90,10 @@ def query(sql,paramTuple): #查询sql
 
 def execute(sql,paramTuple): #其他sql
     app=wx.GetApp();
-    app.conn.execute(sql,paramTuple)
+    if(paramTuple!=None):
+        app.conn.execute(sql,paramTuple)
+    else:
+        app.conn.execute(sql)
     if(PrintSQL):
         print(sql)
         print("commit: false  ;params:"+str(paramTuple))
@@ -100,7 +101,10 @@ def execute(sql,paramTuple): #其他sql
 
 def commit(sql,paramTuple): #其他sql
     app=wx.GetApp();
-    app.conn.execute(sql,paramTuple)
+    if(paramTuple!=None):
+        app.conn.execute(sql,paramTuple)
+    else :    
+        app.conn.execute(sql) 
     if(PrintSQL):
         print(sql)
         print("commit: true   ;params:"+str(paramTuple))

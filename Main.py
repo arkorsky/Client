@@ -1,5 +1,5 @@
 #coding:utf-8
-import wx,os,Frames,Dialogs,md5,sys,sqlite3,datas,time,Utils,Print
+import wx,os,Frames,Dialogs,md5,sys,sqlite3,datas,time,Utils,Print,urllib,urllib2,datetime,Http
 from decimal import *
 
 
@@ -11,6 +11,7 @@ def opj(path):
         str = '/' + str
     return str
 
+
         
 class MyApp(wx.App):
     def OnInit(self):
@@ -18,7 +19,7 @@ class MyApp(wx.App):
         self.db = sqlite3.connect(opj("data/test.db")) 
         self.conn = self.db.cursor()
         
-        
+        self.isOnline = False; #联网状态
         #打印小票
 #        self.pdata = wx.PrintData()
 #        self.pdata.SetPaperId(wx.PAPER_LETTER)
@@ -30,26 +31,42 @@ class MyApp(wx.App):
 #        OtherData = ['2015111916345658', u'196.0',u"想想想"]
 #        printout = Print.GoodsPrinter(ConfigData,goodsData, u"小票打印",OtherData)
 #        printer.Print(None,printout,True)
-        
+        self.Storeid='2'
         self.Id="111";
         self.Name="222"     
+#        self.LogIn=False;
+#        self.doLogIn();
+#        if(not self.LogIn):
+#            #如果未登录  关闭数据库链接,退出App
+#            return False;
+        data={"storeid":self.Storeid}
+        rs=Http.sendHttp(Http.Action_getOffInfo,data)
+        if(not rs==""): ##
+          #删除数据库特价商品
+          sql='delete from sale_offprice '
+          Utils.commit(sql,None)
+          goodsRs=rs['data']
+          if(len(goodsRs)>0):
+              for i in range(0, len(goodsRs)) :
+                  print(goodsRs[i])
+                  sql = 'insert into sale_offprice (goodsId,barCode,offprice,begindate,enddate,begintime,endtime) values (?,?,?,?,?,?,?)'
+                  Utils.commit(sql,(goodsRs[i]['goodsid'],goodsRs[i]['barcode'],goodsRs[i]['retailprice'],goodsRs[i]['begindate'],goodsRs[i]['enddate'],goodsRs[i]['begintime'],goodsRs[i]['endtime'],))
+
         
-        
-        
-        
-        data={"username":"123","password":"a123456","ismemory":""}
-        rs=Utils.sendHttp('checkPwd.do',data)
-        print(rs)
-        print(type(rs))
-         
-     
-        
-        self.LogIn=False;
-        self.doLogIn();
-        if(not self.LogIn):
-            #如果未登录  关闭数据库链接,退出App
-            return False;   
-        
+        if(self.isOnline): #联网状态
+            data={"storeid":self.Storeid}
+            rs=Http.sendHttp(Http.Action_getOffInfo,data)
+            if(not rs==""): ##
+              #删除数据库特价商品
+              sql='delete from sale_offprice '
+              Utils.commit(sql,None)
+              goodsRs=rs['data']
+              if(len(goodsRs)>0):
+                  for i in range(0, len(goodsRs)) :
+                      print(goodsRs[i])
+                      sql = 'insert into sale_offprice (goodsId,barCode,offprice,begindate,enddate,begintime,endtime) values (?,?,?,?,?,?,?)'
+                      Utils.commit(sql,(goodsRs[i]['goodsid'],goodsRs[i]['barcode'],goodsRs[i]['retailprice'],goodsRs[i]['begindate'],goodsRs[i]['enddate'],goodsRs[i]['begintime'],goodsRs[i]['endtime'],))
+                      
         
         #初始化Frame
         self.Homeframe=Frames.HomeFrame()
@@ -59,6 +76,7 @@ class MyApp(wx.App):
     def release(self): #app关闭 释放资源
          self.Homeframe.Destroy()
          self.conn.close()
+    
     
     
     def showDialogWithErrorMsg(self,ErrorMsg):
@@ -76,14 +94,15 @@ class MyApp(wx.App):
                  if(username==u'' or password==''):
                      self.showDialogWithErrorMsg(u"用户名或密码不能为空")
                  else :
-                     data={"username":username,"password":password}
-                     rs=Utils.sendHttp(Utils.Action_singIn,data)
-                     if(not rs==""): #rs不为空,说明是联网状态
+                     data={"username":username,"password":password,"type":"client"}
+                     rs=Http.sendHttp(Http.Action_signIn,data)
+                     if(not rs==""): #rs不为空,说明是请求成功并且返回数据
                         if(not rs['flag']):
-                            self.showDialogWithErrorMsg(u"账号或密码错误")
+                            self.showDialogWithErrorMsg(rs['msg'])
                         else: #账号密码正确
-                            self.doAfterLogIn(rs['id'],rs['name'])
-                            self.doAfterLogInWhenOnline()
+                            self.doAfterLogIn(rs['userid'],rs['name'])
+                            self.isOnline=True;
+                            self.CheckTime()
                      else : #rs为空,说明是断网状态或服务器有问题,查询本地数据库
                          self.conn.execute("select id,name,password from sys_user where username= ? ",(username,))
                          res =self.conn.fetchall()
@@ -101,16 +120,21 @@ class MyApp(wx.App):
              
     def doAfterLogIn(self,id,name): #登陆成功后进行操作
         self.LogIn=True
-        self.Id=Id # Id,
+        self.Id=id # Id,
         self.Name=name # Name,
         
-    def doAfterLogInWhenOnline(self):#登陆成功后,联网状态进行的额外操作
-        #特价商品
-        #
         
-        
-        
-        pass
+    def CheckTime(self): #校验时间提醒  客户端时间与系统时间超过1小时时登陆成功会提醒
+        rs=Http.sendHttp(Http.Action_getDate,None)
+        if(not rs==""):
+            fmt='%Y-%m-%d %H:%M:%S'
+            hourCheckNum = 1
+            now = datetime.datetime.now()
+            end = (now + datetime.timedelta(hours=hourCheckNum)).strftime(fmt)
+            start = (now - datetime.timedelta(hours=hourCheckNum)).strftime(fmt)
+            now = now.strftime(fmt)
+            if(Utils.compare_time(now,start,end,fmt)): #当前时间与服务器时间超过1小时
+                wx.MessageBox(u"为正常使用系统,请调整系统时间   ", u"提醒",wx.OK | wx.ICON_ASTERISK)
         
 
 def main():
@@ -121,8 +145,17 @@ def main():
         pass
     app = MyApp(False)
     app.MainLoop()
-  
+
     
 if __name__ == '__main__':
     __name__ = 'Main'
     main()   
+
+
+
+
+
+
+
+
+
